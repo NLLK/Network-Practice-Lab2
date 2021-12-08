@@ -22,16 +22,23 @@ namespace lr2
 
 		public int[] Received = new int[1];
 
+		int receivingThreadsNumber = 0;
+		bool receivingPhase = false;
+		Thread receiverThread;
+
+
 		public ThreadedThings(int _basicWaitTime, int[] _startSequence, int _packetSize)
 		{
 			BasicWaitTime = _basicWaitTime;
 			StartSequence = _startSequence;
 			PacketSize = _packetSize;
 			Received = new int[PacketSize];
+			receiverThread = new Thread(this.Receiver);
 			//BufferSize = PacketSize + StartSequence.Length;
 		}
 		public void Transmitter(object _message)
 		{
+			receivingPhase = false;
 			int[] message = (int[])_message;
 			int[] messageWithSS = AddStartSequence(StartSequence, message);
 
@@ -41,29 +48,26 @@ namespace lr2
 			for (int i = 0; i < messageWithSS.Length; i++)
 			{
 				LINE = (messageWithSS[i] == 0) ? ampLevel0 : ampLevel1;
-				Console.ForegroundColor = ConsoleColor.Black;
-				Console.WriteLine($"T: передал бит {LINE-1}");
+				ConsoleWriteWithColor($" . T: передал бит {LINE-1}", ConsoleColor.Black);
 				Thread.Sleep(SleepTimeRandomizer(BasicWaitTime, 10));
 			}
 			LINE = 0;
-			Console.ForegroundColor = ConsoleColor.DarkBlue;
-			Console.WriteLine($"T: передача закончена");
+			ConsoleWriteWithColor($"T: передача закончена", ConsoleColor.DarkBlue);
 
 		}
 
 		public void Receiver()
 		{
-			Console.ForegroundColor = ConsoleColor.DarkBlue;
-			Console.WriteLine("R: " + "Приемник запущен...");
-			int sleepTime = 10;
-			bool receivingPhase = false; 
+			receivingThreadsNumber++;
+
+			ConsoleWriteWithColor("R: " + $"Приемник запущен...", ConsoleColor.DarkBlue);
 			while (!RE_SYNC && !Complited)
 			{
+				if (RE_SYNC) break;
 				int buf = LINE;
 				if (buf != 0)
 				{
-					Console.ForegroundColor = ConsoleColor.Magenta;
-					Console.WriteLine("R: " + $"Получен бит: {buf - 1}");
+					ConsoleWriteWithColor(" . . R: " + $"Получен бит: {buf - 1}", ConsoleColor.Magenta);
 
 					if (receivingPhase)
 					{
@@ -86,48 +90,54 @@ namespace lr2
 						//сравнить буфер и стартовую последовательность
 						if (ArrayFunctions.CompareArrays(StartBuffer, StartSequence))
 						{
-							Console.ForegroundColor = ConsoleColor.Blue;
-							Console.WriteLine("R: обнаружена стартовая последовательность");
+							ConsoleWriteWithColor("R: обнаружена стартовая последовательность", ConsoleColor.Blue);
 							receivingPhase = true;
 						}
 					}
 				}
 
 				bool breaking = false;
+				int sleepTime = BasicWaitTime / 5;
 				for (int i = 0; i < 5; i++)//35-50 ms
 				{
-					Thread.Sleep(SleepTimeRandomizer(sleepTime, 3));
 					if (RE_SYNC)
 					{
 						breaking = true;
 						break;
 					}
+					Thread.Sleep(SleepTimeRandomizer(sleepTime, 3));
 				}
 				if (breaking) break;
 			}
-			Console.ForegroundColor = ConsoleColor.Red;
-			Console.WriteLine("R: " + "Приемник перезагрузился...");
+			ConsoleWriteWithColor("R: " + "Приемник выключен", ConsoleColor.Red);
+			receivingThreadsNumber--;
 		}
 
 		public void Listener()
 		{
-			Console.ForegroundColor = ConsoleColor.DarkBlue;
-			Console.WriteLine("L: Запуск прослушивания");
+
+			ConsoleWriteWithColor("L: Запуск прослушивания", ConsoleColor.DarkBlue);
+
+			receiverThread.Start();
+
 			int buf = 0;
 			while (!Complited)
 			{
 				buf = LINE;
-
+				ConsoleWriteWithColor($"L: Было {buf}", ConsoleColor.Black);
 				Thread.Sleep(SleepTimeRandomizer(BasicWaitTime, 10));
+				ConsoleWriteWithColor($"L: Стало {LINE}", ConsoleColor.Black);
 				if (buf != LINE)
 				{
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.WriteLine("L: Пересинхронизация");
-					RE_SYNC = true;
-					Thread.Sleep(10);
+					ConsoleWriteWithColor("L: Пересинхронизация", ConsoleColor.Red);
+					while (receivingThreadsNumber !=0)
+                    {
+						RE_SYNC = true;
+                    }
 					RE_SYNC = false;
+					
 					//запуск потока приемника
-					Thread receiverThread = new Thread(this.Receiver);
+					receiverThread = new Thread(this.Receiver);
 					receiverThread.Start();
 				}
 				
@@ -152,6 +162,13 @@ namespace lr2
 				output[i] = message[i - startSequence.Length];
 
 			return output;
+		}
+		static void ConsoleWriteWithColor(string str, ConsoleColor color)
+		{
+			Console.ForegroundColor = color;
+			DateTime now = DateTime.Now;
+			Console.WriteLine($"{now.Millisecond:D3} . . . . . {str}");
+			//Console.ForegroundColor = ConsoleColor.Black;
 		}
 
 	}

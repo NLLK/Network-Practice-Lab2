@@ -9,7 +9,7 @@ namespace lr2
     class Program
     {
         const float noiseLevelQ = 0.05f;//0.05f;
-        const int BasicWaitTime = 50;
+        const int BasicWaitTime = 150;
         const int DelayBetweenThreads = BasicWaitTime / 2;
         const int DelayBetweenPackets = 300;
 
@@ -37,9 +37,8 @@ namespace lr2
 
             transmitterThread.Start(message);
 
-            Thread.Sleep(ThreadedThings.SleepTimeRandomizer((message.Length+10)*50, 20));
+            Thread.Sleep(ThreadedThings.SleepTimeRandomizer((message.Length+10)*BasicWaitTime, 20));
 
-            Console.ForegroundColor = ConsoleColor.Black;
             Console.WriteLine("M: Complited = true");
 
             tt.Complited = true;
