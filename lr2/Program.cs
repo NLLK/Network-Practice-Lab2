@@ -9,7 +9,7 @@ namespace lr2
     class Program
     {
         const float noiseLevelQ = 0.05f;//0.05f;
-        const int BasicWaitTime = 150;
+        const int BasicWaitTime = 400;
         const int DelayBetweenThreads = BasicWaitTime / 2;
         const int DelayBetweenPackets = 300;
 
@@ -32,6 +32,7 @@ namespace lr2
 
 
             Thread transmitterThread = new Thread(tt.Transmitter);
+            transmitterThread.Priority = ThreadPriority.Highest;
 
             int[] message = { 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0 };
 

@@ -45,14 +45,18 @@ namespace lr2
 			int ampLevel1 = 2;
 			int ampLevel0 = 1;
 
+			ConsoleColor color = ConsoleColor.DarkBlue;
+
+			ConsoleWriteWithColor("T: запуск передачи", color);
+
 			for (int i = 0; i < messageWithSS.Length; i++)
 			{
 				LINE = (messageWithSS[i] == 0) ? ampLevel0 : ampLevel1;
-				ConsoleWriteWithColor($" . T: передал бит {LINE-1}", ConsoleColor.Black);
+				ConsoleWriteWithColor($" . T: передал бит {LINE-1}", color);
 				Thread.Sleep(SleepTimeRandomizer(BasicWaitTime, 10));
 			}
 			LINE = 0;
-			ConsoleWriteWithColor($"T: передача закончена", ConsoleColor.DarkBlue);
+			ConsoleWriteWithColor($"T: передача закончена", color);
 
 		}
 
@@ -60,14 +64,16 @@ namespace lr2
 		{
 			receivingThreadsNumber++;
 
-			ConsoleWriteWithColor("R: " + $"Приемник запущен...", ConsoleColor.DarkBlue);
+			ConsoleColor color = ConsoleColor.Magenta;
+
+			ConsoleWriteWithColor("R: " + $"Приемник запущен...", color);
 			while (!RE_SYNC && !Complited)
 			{
 				if (RE_SYNC) break;
 				int buf = LINE;
 				if (buf != 0)
 				{
-					ConsoleWriteWithColor(" . . R: " + $"Получен бит: {buf - 1}", ConsoleColor.Magenta);
+					ConsoleWriteWithColor(" . . R: " + $"Получен бит: {buf - 1}", color);
 
 					if (receivingPhase)
 					{
@@ -90,8 +96,9 @@ namespace lr2
 						//сравнить буфер и стартовую последовательность
 						if (ArrayFunctions.CompareArrays(StartBuffer, StartSequence))
 						{
-							ConsoleWriteWithColor("R: обнаружена стартовая последовательность", ConsoleColor.Blue);
+							ConsoleWriteWithColor("R: обнаружена стартовая последовательность", color);
 							receivingPhase = true;
+							break;
 						}
 					}
 				}
@@ -109,14 +116,14 @@ namespace lr2
 				}
 				if (breaking) break;
 			}
-			ConsoleWriteWithColor("R: " + "Приемник выключен", ConsoleColor.Red);
+			ConsoleWriteWithColor("R: " + "Приемник выключен", color);
 			receivingThreadsNumber--;
 		}
 
 		public void Listener()
 		{
-
-			ConsoleWriteWithColor("L: Запуск прослушивания", ConsoleColor.DarkBlue);
+			ConsoleColor color = ConsoleColor.Red;
+			ConsoleWriteWithColor("L: Запуск прослушивания", color);
 
 			receiverThread.Start();
 
@@ -124,12 +131,12 @@ namespace lr2
 			while (!Complited)
 			{
 				buf = LINE;
-				ConsoleWriteWithColor($"L: Было {buf}", ConsoleColor.Black);
+				ConsoleWriteWithColor($"L: Было {buf}", color);
 				Thread.Sleep(SleepTimeRandomizer(BasicWaitTime, 10));
-				ConsoleWriteWithColor($"L: Стало {LINE}", ConsoleColor.Black);
+				ConsoleWriteWithColor($"L: Стало {LINE}", color);
 				if (buf != LINE)
 				{
-					ConsoleWriteWithColor("L: Пересинхронизация", ConsoleColor.Red);
+					ConsoleWriteWithColor("L: Пересинхронизация", color);
 					while (receivingThreadsNumber !=0)
                     {
 						RE_SYNC = true;
@@ -145,7 +152,7 @@ namespace lr2
 		}
 		static public int SleepTimeRandomizer(int baseTime, int approximation)
 		{
-			Random random = new Random();
+			//Random random = new Random();
 			return baseTime;
 			//return baseTime - random.Next(0, approximation);
 		}
