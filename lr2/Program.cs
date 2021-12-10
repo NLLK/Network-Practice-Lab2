@@ -9,7 +9,7 @@ namespace lr2
     class Program
     {
         const float noiseLevelQ = 0.05f;//0.05f;
-        const int BasicWaitTime = 400;
+        const int BasicWaitTime = 200;
         const int DelayBetweenThreads = BasicWaitTime / 2;
         const int DelayBetweenPackets = 300;
 

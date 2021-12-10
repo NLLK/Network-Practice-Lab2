@@ -62,11 +62,17 @@ namespace lr2
 
 		public void Receiver()
 		{
+			ConsoleColor color = ConsoleColor.Magenta;
 			receivingThreadsNumber++;
 
-			ConsoleColor color = ConsoleColor.Magenta;
+			while (receivingThreadsNumber != 1)
+			{
+				
+			}
 
-			ConsoleWriteWithColor("R: " + $"Приемник запущен...", color);
+			RE_SYNC = false;
+
+			ConsoleWriteWithColor("R: " + $"Приемник запущен... Поток {receivingThreadsNumber}", color);
 			while (!RE_SYNC && !Complited)
 			{
 				if (RE_SYNC) break;
@@ -98,7 +104,6 @@ namespace lr2
 						{
 							ConsoleWriteWithColor("R: обнаружена стартовая последовательность", color);
 							receivingPhase = true;
-							break;
 						}
 					}
 				}
@@ -137,15 +142,12 @@ namespace lr2
 				if (buf != LINE)
 				{
 					ConsoleWriteWithColor("L: Пересинхронизация", color);
-					while (receivingThreadsNumber !=0)
-                    {
-						RE_SYNC = true;
-                    }
-					RE_SYNC = false;
+					RE_SYNC = true;
 					
 					//запуск потока приемника
 					receiverThread = new Thread(this.Receiver);
 					receiverThread.Start();
+					ConsoleWriteWithColor("L: Запуск потока приемника", color);
 				}
 				
 			}		
