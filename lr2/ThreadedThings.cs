@@ -63,66 +63,85 @@ namespace lr2
 		public void Receiver()
 		{
 			ConsoleColor color = ConsoleColor.Magenta;
-			receivingThreadsNumber++;
+			//receivingThreadsNumber++;
 
-			while (receivingThreadsNumber != 1)
+			/*while (receivingThreadsNumber != 1)
 			{
 				
-			}
-
-			RE_SYNC = false;
-
-			ConsoleWriteWithColor("R: " + $"Приемник запущен... Поток {receivingThreadsNumber}", color);
-			while (!RE_SYNC && !Complited)
+			}*/
+			while (!Complited)
 			{
-				if (RE_SYNC) break;
-				int buf = LINE;
-				if (buf != 0)
+				RE_SYNC = false;
+
+				ConsoleWriteWithColor("R: " + $"Приемник запущен... Поток {receivingThreadsNumber}", color);
+				while (!RE_SYNC && !Complited)
 				{
-					ConsoleWriteWithColor(" . . R: " + $"Получен бит: {buf - 1}", color);
-
-					if (receivingPhase)
+					if (RE_SYNC) break;
+					int buf = LINE;
+					if (buf != 0)
 					{
-						Received = ArrayFunctions.LeftShiftArray(Received);
-						Received[Received.Length - 1] = buf - 1;
-					}
-					else
-					{
-						//считать линию-1
-						int currentBit = buf - 1;
+						ConsoleWriteWithColor(" . . R: " + $"Получен бит: {buf - 1}", color);
 
-						//сдвинуть вправо и записать в конец
-						int[] shiftedBuffer = ArrayFunctions.LeftShiftArray(StartBuffer);
-
-						if (currentBit < 0) currentBit = 0;
-						shiftedBuffer[shiftedBuffer.Length - 1] = currentBit;
-
-						StartBuffer = shiftedBuffer;
-
-						//сравнить буфер и стартовую последовательность
-						if (ArrayFunctions.CompareArrays(StartBuffer, StartSequence))
+						if (receivingPhase)
 						{
-							ConsoleWriteWithColor("R: обнаружена стартовая последовательность", color);
-							receivingPhase = true;
+							Received = ArrayFunctions.LeftShiftArray(Received);
+							Received[Received.Length - 1] = buf - 1;
+						}
+						else
+						{
+							//считать линию-1
+							int currentBit = buf - 1;
+
+							//сдвинуть вправо и записать в конец
+							int[] shiftedBuffer = ArrayFunctions.LeftShiftArray(StartBuffer);
+
+							if (currentBit < 0) currentBit = 0;
+							shiftedBuffer[shiftedBuffer.Length - 1] = currentBit;
+
+							StartBuffer = shiftedBuffer;
+
+							//сравнить буфер и стартовую последовательность
+							if (ArrayFunctions.CompareArrays(StartBuffer, StartSequence))
+							{
+								ConsoleWriteWithColor("R: обнаружена стартовая последовательность", color);
+								//receivingPhase = true;
+							}
 						}
 					}
-				}
-
-				bool breaking = false;
-				int sleepTime = BasicWaitTime / 5;
-				for (int i = 0; i < 5; i++)//35-50 ms
-				{
-					if (RE_SYNC)
+					else
+						ConsoleWriteWithColor("R: " + $"На линии 0", color);
+					bool breaking = false;
+					int sleepTime = 10;
+					ConsoleWriteWithColor("R: " + $"Спим {BasicWaitTime} мс", color);
+					/*for (int i = 0; i < BasicWaitTime; i+=sleepTime)//35-50 ms
 					{
-						breaking = true;
-						break;
+						if (RE_SYNC)
+						{
+							breaking = true;
+							break;
+						}
+						ConsoleWriteWithColor("R: " + $"Спим", color);
+						Thread.Sleep(SleepTimeRandomizer(sleepTime, 3));
+					}*/
+
+					DateTime startedWaiting = DateTime.Now;
+					while (DateTime.Now.Subtract(startedWaiting).TotalMilliseconds < BasicWaitTime)
+					{
+						if (RE_SYNC)
+						{
+							breaking = true;
+							break;
+						}
+						//ConsoleWriteWithColor("R: " + $"Спим", color);
+						Thread.Sleep(SleepTimeRandomizer(sleepTime, 3));
 					}
-					Thread.Sleep(SleepTimeRandomizer(sleepTime, 3));
+
+					ConsoleWriteWithColor("R: " + $"Проспались", color);
+					if (breaking) break;
 				}
-				if (breaking) break;
+				ConsoleWriteWithColor("R: " + "Приемник выключен", color);
+				//receivingThreadsNumber--;
 			}
-			ConsoleWriteWithColor("R: " + "Приемник выключен", color);
-			receivingThreadsNumber--;
 		}
 
 		public void Listener()
@@ -130,9 +149,18 @@ namespace lr2
 			ConsoleColor color = ConsoleColor.Red;
 			ConsoleWriteWithColor("L: Запуск прослушивания", color);
 
+			int buf = LINE;
+			while (buf == 0)
+			{
+				Thread.Sleep(1);
+				buf = LINE;
+			}
+			ConsoleWriteWithColor("L: Зафиксировано начало передачи", color);
+
 			receiverThread.Start();
 
-			int buf = 0;
+			buf = 0;
+			
 			while (!Complited)
 			{
 				buf = LINE;
@@ -145,8 +173,8 @@ namespace lr2
 					RE_SYNC = true;
 					
 					//запуск потока приемника
-					receiverThread = new Thread(this.Receiver);
-					receiverThread.Start();
+					//receiverThread = new Thread(this.Receiver);
+					//receiverThread.Start();
 					ConsoleWriteWithColor("L: Запуск потока приемника", color);
 				}
 				
